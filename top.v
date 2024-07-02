@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module digital_watch(input clk, reset, start_stop, mode, edit_shift, inc, output [0:6] seg,output [3:0] digit,output reg [2:0] mode_value);
+module top(input clk, reset, start_stop, mode, edit_shift, inc, output [0:6] seg,output [3:0] digit,output reg [2:0] mode_value);
 
 reg edit_place;
 
