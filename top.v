@@ -51,31 +51,30 @@ seven_seg seven_seg_1(clk,reset,state,tm_state,edit_place,ones,tens,hundreds,tho
  //Original Clock Run
  always @(posedge clk) begin
 	if(state==edit) begin
-	   if (reset==1 && scount==15_000_001) begin
+		if (reset==1 && scount==15_000_001) begin
 			hours_temp<=hours;
 			minutes_temp<=minutes;
 			seconds_temp<=seconds;
 			end
-        else if(inc==1 && scount==15_000_001) begin
-            hours_temp<=hours;
+		else if (inc==1 && scount==15_000_001) begin
+			hours_temp<=hours;
 			minutes_temp<=minutes;
-        end     
-	end
-    else begin
-		if(sclk==1'b1 && count==0) begin  
-			seconds_temp<=seconds_temp + 1; 
-			if(seconds_temp==59) begin 
-				seconds_temp<=0;  
-				minutes_temp<=minutes_temp + 1;
-				if(minutes_temp==59) begin 
-					minutes_temp<=0; 
-					hours_temp<=hours_temp + 1; 
-				   if(hours_temp==23) begin  
-						hours_temp<=0; 
-					end 
-				end
-			end     
 		end
+	end
+    
+	if(sclk==1'b1 && count==0) begin  
+		seconds_temp<=seconds_temp + 1; 
+		if(seconds_temp==59) begin 
+			seconds_temp<=0;  
+			minutes_temp<=minutes_temp + 1;
+			if(minutes_temp==59) begin 
+				minutes_temp<=0; 
+				hours_temp<=hours_temp + 1; 
+			   if(hours_temp==23) begin  
+					hours_temp<=0; 
+				end 
+			end
+		end     
 	end
  end
  
@@ -191,6 +190,10 @@ always @(posedge(clk) ) begin
 			end
 			
 			else begin
+				if(minutes!=minutes_temp || hours!=hours_temp) begin
+					minutes<=minutes_temp;
+					hours<=hours_temp;
+				end
 				scount<=0;
 				state<=nstate;
 				
