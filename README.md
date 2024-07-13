@@ -76,4 +76,4 @@ selected time unit (minutes/seconds).
 
 4.OUTPUT ON THE BASYS BOARD
 
-Drive_link: https://drive.google.com/file/d/1KSYFOlF2eukS_ucFTA1CtGmatqqZGWZI/view
+Drive_link: https://drive.google.com/file/d/1PUQTWywNAGPOG6f4PEp72l2Ui6K2iOzT/view?usp=drivesdk
