@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-
 module digits(
     input clk,
     input reset,
@@ -28,7 +27,7 @@ module digits(
 				hundreds <= hours % 10;
 				thousands <= hours / 10;
 			end
-			else if(state==2) begin
+			else if(state==2 || state==3) begin
 				ones <= seconds % 10;
 				tens <= seconds / 10;
 				hundreds <= minutes % 10;
