@@ -1,368 +1,473 @@
 `timescale 1ns / 1ps
-module seven_seg(
-    input clk_100MHz,
-    input reset,
-    input [1:0] state,
-    input tm_state,
-	input sw_state,
-    input edit_place,
-    input [3:0] ones,
-    input [3:0] tens,
-    input [3:0] hundreds,
-    input [3:0] thousands,
-    output reg [0:6] seg,       
-    output reg [3:0] digit     
-    );
-    parameter ZERO  = 7'b000_0001;  
-    parameter ONE   = 7'b100_1111;  
-    parameter TWO   = 7'b001_0010;  
-    parameter THREE = 7'b000_0110;  
-    parameter FOUR  = 7'b100_1100;  
-    parameter FIVE  = 7'b010_0100; 
-    parameter SIX   = 7'b010_0000;  
-    parameter SEVEN = 7'b000_1111;
-    parameter EIGHT = 7'b000_0000;  
-    parameter NINE  = 7'b000_0100;  
+module top(input clk, reset, start_stop, mode, edit_shift, inc, output [0:6] seg,output [3:0] digit,output reg [3:0] mode_value);
+
+reg edit_place;
+
+reg [5:0] seconds,minutes;
+reg [4:0] hours;
+
+reg [5:0] seconds_temp=0,minutes_temp=0;
+reg [4:0] hours_temp=0;
+
+wire [3:0] ones,tens,hundreds,thousands;
+
+//initial values
+initial edit_place=1;
+initial seconds=0;
+initial minutes=0;
+initial hours=0;
+
+//Confirmation LED's
+initial mode_value=3'b100;
+
+//Modes
+parameter clock = 0;
+parameter edit =1;
+parameter timer =2; 
+parameter stop_watch=3;
+//Timer_Modes
+parameter tm_stop=0;
+parameter tm_start=1;
+//Stop_Watch States
+parameter sw_stop=0;
+parameter sw_start=1;
+
+reg tm_state=tm_stop, tm_nstate=tm_stop;
+reg sw_state=sw_stop, sw_nstate=sw_stop;
+
+reg [1:0] state = clock, nstate = clock;   
+reg trigger=0;
+
+reg sclk=0;
+integer count=0;
+reg[31:0] scount=0;
+ 
+digits digits_1(clk,reset,state,seconds,minutes,hours,ones,tens,hundreds,thousands);
+seven_seg seven_seg_1(clk,reset,state,tm_state,sw_state,edit_place,ones,tens,hundreds,thousands,seg,digit);
+
+ //Slower Clock
+ always @(posedge clk) begin
+     if(count==49_999_999) begin //
+         count<=0;
+         sclk<=~sclk;
+     end 
+     else count<=count+1;
+ end
+ 
+ //Original Clock Run
+ always @(posedge clk) begin
+	if(state==edit) begin
+		if (reset==1 && scount==15_000_001) begin
+			hours_temp<=hours;
+			minutes_temp<=minutes;
+			seconds_temp<=seconds;
+			end
+		else if (inc==1 && scount==15_000_001) begin
+			hours_temp<=hours;
+			minutes_temp<=minutes;
+		end
+	end
     
-    reg [1:0] digit_select;     // 2 bit counter for selecting each of 4 digits
-    reg [16:0] digit_timer;     // counter for digit refresh
-    
-     initial digit_select = 0;
-     initial digit_timer = 0; 
-     
-     reg sclk=0;
-     integer count=0;
-     
-     //edit_blink_clock
-     always @(posedge clk_100MHz) begin
-          if(count==24_999_999) begin //
-              count<=0;
-              sclk<=~sclk;
-          end 
-          else count<=count+1;
-     end
-     
-    // Logic for controlling digit select and digit timer
-    always @(posedge clk_100MHz or posedge reset) begin
-        if(reset) begin
-            digit_select <= 0;
-            digit_timer <= 0; 
-        end
-        else                                        // 1ms x 4 displays = 4ms refresh period
-            if(digit_timer == 99_999 ) begin 
-                digit_timer <= 0;                   // 10ns x 100,000 = 1ms (99_999)
-                digit_select <=  digit_select + 1;
+	if(sclk==1'b1 && count==0) begin  
+		seconds_temp<=seconds_temp + 1; 
+		if(seconds_temp==59) begin 
+			seconds_temp<=0;  
+			minutes_temp<=minutes_temp + 1;
+			if(minutes_temp==59) begin 
+				minutes_temp<=0; 
+				hours_temp<=hours_temp + 1; 
+			   if(hours_temp==23) begin  
+					hours_temp<=0; 
+				end 
+			end
+		end     
+	end
+ end
+ 
+ //Modes_Run
+always @(posedge clk) begin
+    if(state==clock)
+        mode_value<=4'b1000;
+     else if(state==edit)
+        mode_value<=4'b0100;
+    else if(state==timer)
+        mode_value<=4'b0010;
+    else if(state==stop_watch)
+        mode_value<=4'b0001;
+end
+ 
+//Different Modes
+always @(posedge(clk) ) begin
+	case(state)
+	clock: begin
+		if(mode) begin
+            if(scount<15_000_000) //25_000_000
+                scount<=scount+1;
+            else begin
+                if(mode && scount==15_000_000) begin //25_000_000
+					nstate<=edit;
+                    scount<=scount+1;
+                end
+                else begin
+					nstate<=nstate;
+                    scount<=scount+1;
+                end
             end
-            else
-                digit_timer <=  digit_timer + 1;
-    end
-    
-    always @(digit_select) begin
-        case(digit_select) 
-            2'b00 : digit = 4'b1110;  
-            2'b01 : digit = 4'b1101;  
-            2'b10 : digit = 4'b1011;  
-            2'b11 : digit = 4'b0111;  
-        endcase
-    end
-    
+        end
+		else begin
+		    scount<=0;
+			state<=nstate;
+			hours<=hours_temp;
+			minutes<=minutes_temp;
+			seconds<=seconds_temp;
+		end
+	end
+	
+	edit: begin
+			if(reset) begin 
+				if(scount<15_000_000) //25_000_000
+					scount<=scount+1;
+				else begin
+					if(reset && scount==15_000_000) begin //25_000_000
+						seconds<=0;
+						minutes<=0;
+						hours<=0;
+						scount<=scount+1;
+					end
+					else begin
+						scount<=scount+1;
+					end
+				end
+			end
+			
+			else if(mode) begin
+				if(scount<15_000_000) //25_000_000
+					scount<=scount+1;
+				else begin
+					if(mode && scount==15_000_000) begin //25_000_000 
+						nstate<=timer;
+						trigger<=1;
+						scount<=scount+1;
+					end
+					else begin
+						nstate<=nstate;
+						scount<=scount+1;
+					end
+				end
+			end
+			
+			else if(edit_shift) begin
+				if(scount<15_000_000) //25_000_000
+					scount<=scount+1;
+				else begin
+					if(edit_shift && scount==15_000_000) begin //25_000_000
+						scount<=scount+1;
+						edit_place<=~edit_place;
+					end
+					else begin
+						scount<=scount+1;
+						edit_place<=edit_place;
+					end
+				end
+			end
+			
+			else if(inc) begin
+				if(scount<15_000_000) //25_000_000
+					scount<=scount+1;
+				else begin
+					if(inc && scount==15_000_000) begin //25_000_000
+						
+						if(edit_place) begin
+							if(hours<23)
+								hours<=hours+1;
+							else
+								hours<=0;
+						end 
+						else if(~edit_place) begin
+							if(minutes<59)
+								minutes<=minutes+1;
+							else
+								minutes<=0;
+						end
+						scount<=scount+1;
+					end
+					else begin
+						scount<=scount+1;
+					end
+				end
+			end
+			
+			else begin
+				if(minutes!=minutes_temp || hours!=hours_temp) begin
+					minutes<=minutes_temp;
+					hours<=hours_temp;
+				end
+				scount<=0;
+				state<=nstate;
+				
+			end
+	   end
+	
+	timer: begin
+		if(trigger) begin
+			minutes<=0;
+			seconds<=0;
+			trigger<=0;
+		end
+		case(tm_state)
+			tm_stop: begin
+				if(reset == 1'b1) begin 
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(reset && scount==15_000_000) begin //25_000_000
+							seconds<=0;
+							minutes<=0;
+							scount<=scount+1;
+						end
+						else begin
+							seconds<=seconds;
+							minutes<=minutes;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(mode) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
 
-    always @*
-        case(digit_select)
-            2'b00 : begin       
-                        if(state==1  && edit_place==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(ones)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else if(state==2 && tm_state==0 &&  edit_place==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(ones)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-						else if(state==3 && sw_state==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(ones)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else begin
-                            case(ones)
-                                4'b0000 : seg = ZERO;
-                                4'b0001 : seg = ONE;
-                                4'b0010 : seg = TWO;
-                                4'b0011 : seg = THREE;
-                                4'b0100 : seg = FOUR;
-                                4'b0101 : seg = FIVE;
-                                4'b0110 : seg = SIX;
-                                4'b0111 : seg = SEVEN;
-                                4'b1000 : seg = EIGHT;
-                                4'b1001 : seg = NINE;
-                            endcase
-                        end
-            end               
-            2'b01 : begin      
-                         if(state==1  && edit_place==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(tens)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else if(state==2 && tm_state==0 && edit_place==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(tens)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-						else if(state==3 && sw_state==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(tens)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else begin
-                            case(tens)
-                                4'b0000 : seg = ZERO;
-                                4'b0001 : seg = ONE;
-                                4'b0010 : seg = TWO;
-                                4'b0011 : seg = THREE;
-                                4'b0100 : seg = FOUR;
-                                4'b0101 : seg = FIVE;
-                                4'b0110 : seg = SIX;
-                                4'b0111 : seg = SEVEN;
-                                4'b1000 : seg = EIGHT;
-                                4'b1001 : seg = NINE;
-                            endcase
-                        end
-                    end
-                    
-            2'b10 : begin      
-                         if(state==1  && edit_place==1) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(hundreds)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else if(state==2 && tm_state==0 && edit_place==1) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(hundreds)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-						else if(state==3 && sw_state==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(hundreds)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else begin
-                            case(hundreds)
-                                4'b0000 : seg = ZERO;
-                                4'b0001 : seg = ONE;
-                                4'b0010 : seg = TWO;
-                                4'b0011 : seg = THREE;
-                                4'b0100 : seg = FOUR;
-                                4'b0101 : seg = FIVE;
-                                4'b0110 : seg = SIX;
-                                4'b0111 : seg = SEVEN;
-                                4'b1000 : seg = EIGHT;
-                                4'b1001 : seg = NINE;
-                            endcase
-                        end
-                    end
-                    
-            2'b11 : begin       
-                         if(state==1  && edit_place==1) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(thousands)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else if(state==2 && tm_state==0 && edit_place==1) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(thousands)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-						else if(state==3 && sw_state==0) begin
-                            if(sclk==1'b0) begin
-                                seg=7'b111_1111;
-                            end
-                            else begin
-                                case(thousands)
-                                    4'b0000 : seg = ZERO;
-                                    4'b0001 : seg = ONE;
-                                    4'b0010 : seg = TWO;
-                                    4'b0011 : seg = THREE;
-                                    4'b0100 : seg = FOUR;
-                                    4'b0101 : seg = FIVE;
-                                    4'b0110 : seg = SIX;
-                                    4'b0111 : seg = SEVEN;
-                                    4'b1000 : seg = EIGHT;
-                                    4'b1001 : seg = NINE;
-                                endcase
-                            end
-                        end
-                        else begin
-                            case(thousands)
-                                4'b0000 : seg = ZERO;
-                                4'b0001 : seg = ONE;
-                                4'b0010 : seg = TWO;
-                                4'b0011 : seg = THREE;
-                                4'b0100 : seg = FOUR;
-                                4'b0101 : seg = FIVE;
-                                4'b0110 : seg = SIX;
-                                4'b0111 : seg = SEVEN;
-                                4'b1000 : seg = EIGHT;
-                                4'b1001 : seg = NINE;
-                            endcase
-                        end
-                    end
-        endcase
+					else begin
+						if(mode && scount==15_000_000) begin  //25_000_000
+							nstate<=stop_watch;
+							trigger<=1;
+							scount<=scount+1;
+						end
+						else begin
+							nstate<=nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(inc) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(inc && scount==15_000_000) begin //25_000_000
+							
+							if(edit_place) begin
+								if(minutes<60)
+									minutes<=minutes+1;
+								else
+									minutes<=0;
+							end 
+							else begin
+								if(seconds<59)
+									seconds<=seconds+1;
+								else
+									seconds<=0;
+							end
+							scount<=scount+1;
+						end
+						else begin
+							scount<=scount+1;
+							minutes<=minutes;
+							seconds<=seconds;
+						end
+					end
+				end
+				else if(edit_shift) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(edit_shift && scount==15_000_000) begin //25_000_000
+							scount<=scount+1;
+							edit_place<=~edit_place;
+						end
+						else begin
+							edit_place<=edit_place;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							tm_nstate<=tm_start;
+							scount<=scount+1;
+						end
+						else begin
+							tm_nstate<=tm_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					state<=nstate;
+					tm_state<=tm_nstate;
+					
+				end
+			end
+			tm_start: begin
+				if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							tm_nstate<=tm_stop;
+							scount<=scount+1;
+						end
+						else begin
+							tm_nstate<=tm_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					tm_state<=tm_nstate;
+					if(sclk==1'b1 && count==0 && tm_nstate==tm_start) begin  
+						if(minutes>0) begin
+							if(seconds>0) 
+								seconds<=seconds-1;
+							else begin
+								minutes<=minutes-1;
+								seconds<=6'd59;
+							end
+						end
+						else begin
+							if(seconds==0) begin
+							    tm_nstate<=tm_stop;
+								seconds<=seconds;
+								minutes<=minutes;
+							end
+							else
+								seconds<=seconds-1;
+						end		
+					end
+				end
+			end
+			default: begin
+				tm_state<=tm_stop;
+				seconds<=seconds;
+				minutes<=minutes;
+			end
+		endcase
+		end
+		stop_watch: begin
+			if(trigger) begin
+				minutes<=0;
+				seconds<=0;
+				trigger<=0;
+			end
+			case(sw_state)
+			sw_stop: begin
+				if(reset == 1'b1) begin 
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(reset && scount==15_000_000) begin //25_000_000
+							seconds<=0;
+							minutes<=0;
+							scount<=scount+1;
+						end
+						else begin
+							seconds<=seconds;
+							minutes<=minutes;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(mode) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
 
+					else begin
+						if(mode && scount==15_000_000) begin  //25_000_000
+							nstate<=clock;
+							scount<=scount+1;
+						end
+						else begin
+							nstate<=nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							sw_nstate<=sw_start;
+							scount<=scount+1;
+						end
+						else begin
+							sw_nstate<=sw_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					state<=nstate;
+					sw_state<=sw_nstate;
+					
+				end
+			end
+			sw_start: begin
+				if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							sw_nstate<=sw_stop;
+							scount<=scount+1;
+						end
+						else begin
+							sw_nstate<=sw_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					sw_state<=sw_nstate;
+					if(sclk==1'b1 && count==0 && sw_nstate==sw_start) begin  
+						if(minutes<59) begin
+							if(seconds<59) 
+								seconds<=seconds+1;
+							else begin
+								minutes<=minutes+1;
+								seconds<=6'd00;
+							end
+						end
+						else begin
+							if(seconds==6'd59) begin
+							    sw_nstate<=sw_stop;
+								seconds<=seconds;
+								minutes<=minutes;
+							end
+							else
+								seconds<=seconds+1;
+						end		
+					end
+				end
+			end
+			default: begin
+				sw_state<=sw_stop;
+				seconds<=seconds;
+				minutes<=minutes;
+			end
+			endcase
+		end
+		default: begin
+			state<=clock;
+			seconds<=seconds;
+			minutes<=minutes;
+			hours<=hours;
+		end
+	endcase
+end
 endmodule
