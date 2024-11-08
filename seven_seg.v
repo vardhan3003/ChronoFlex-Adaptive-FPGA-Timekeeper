@@ -4,6 +4,7 @@ module seven_seg(
     input reset,
     input [1:0] state,
     input tm_state,
+	input sw_state,
     input edit_place,
     input [3:0] ones,
     input [3:0] tens,
@@ -107,6 +108,25 @@ module seven_seg(
                                 endcase
                             end
                         end
+						else if(state==3 && sw_state==0) begin
+                            if(sclk==1'b0) begin
+                                seg=7'b111_1111;
+                            end
+                            else begin
+                                case(ones)
+                                    4'b0000 : seg = ZERO;
+                                    4'b0001 : seg = ONE;
+                                    4'b0010 : seg = TWO;
+                                    4'b0011 : seg = THREE;
+                                    4'b0100 : seg = FOUR;
+                                    4'b0101 : seg = FIVE;
+                                    4'b0110 : seg = SIX;
+                                    4'b0111 : seg = SEVEN;
+                                    4'b1000 : seg = EIGHT;
+                                    4'b1001 : seg = NINE;
+                                endcase
+                            end
+                        end
                         else begin
                             case(ones)
                                 4'b0000 : seg = ZERO;
@@ -143,6 +163,25 @@ module seven_seg(
                             end
                         end
                         else if(state==2 && tm_state==0 && edit_place==0) begin
+                            if(sclk==1'b0) begin
+                                seg=7'b111_1111;
+                            end
+                            else begin
+                                case(tens)
+                                    4'b0000 : seg = ZERO;
+                                    4'b0001 : seg = ONE;
+                                    4'b0010 : seg = TWO;
+                                    4'b0011 : seg = THREE;
+                                    4'b0100 : seg = FOUR;
+                                    4'b0101 : seg = FIVE;
+                                    4'b0110 : seg = SIX;
+                                    4'b0111 : seg = SEVEN;
+                                    4'b1000 : seg = EIGHT;
+                                    4'b1001 : seg = NINE;
+                                endcase
+                            end
+                        end
+						else if(state==3 && sw_state==0) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -216,6 +255,25 @@ module seven_seg(
                                 endcase
                             end
                         end
+						else if(state==3 && sw_state==0) begin
+                            if(sclk==1'b0) begin
+                                seg=7'b111_1111;
+                            end
+                            else begin
+                                case(hundreds)
+                                    4'b0000 : seg = ZERO;
+                                    4'b0001 : seg = ONE;
+                                    4'b0010 : seg = TWO;
+                                    4'b0011 : seg = THREE;
+                                    4'b0100 : seg = FOUR;
+                                    4'b0101 : seg = FIVE;
+                                    4'b0110 : seg = SIX;
+                                    4'b0111 : seg = SEVEN;
+                                    4'b1000 : seg = EIGHT;
+                                    4'b1001 : seg = NINE;
+                                endcase
+                            end
+                        end
                         else begin
                             case(hundreds)
                                 4'b0000 : seg = ZERO;
@@ -253,6 +311,25 @@ module seven_seg(
                             end
                         end
                         else if(state==2 && tm_state==0 && edit_place==1) begin
+                            if(sclk==1'b0) begin
+                                seg=7'b111_1111;
+                            end
+                            else begin
+                                case(thousands)
+                                    4'b0000 : seg = ZERO;
+                                    4'b0001 : seg = ONE;
+                                    4'b0010 : seg = TWO;
+                                    4'b0011 : seg = THREE;
+                                    4'b0100 : seg = FOUR;
+                                    4'b0101 : seg = FIVE;
+                                    4'b0110 : seg = SIX;
+                                    4'b0111 : seg = SEVEN;
+                                    4'b1000 : seg = EIGHT;
+                                    4'b1001 : seg = NINE;
+                                endcase
+                            end
+                        end
+						else if(state==3 && sw_state==0) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
