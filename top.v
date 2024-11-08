@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module top(input clk, reset, start_stop, mode, edit_shift, inc, output [0:6] seg,output [3:0] digit,output reg [2:0] mode_value);
+module top(input clk, reset, start_stop, mode, edit_shift, inc, output [0:6] seg,output [3:0] digit,output reg [3:0] mode_value);
 
 reg edit_place;
 
@@ -24,11 +24,17 @@ initial mode_value=3'b100;
 parameter clock = 0;
 parameter edit =1;
 parameter timer =2; 
+parameter stop_watch=3;
 //Timer_Modes
 parameter tm_stop=0;
 parameter tm_start=1;
+//Stop_Watch States
+parameter sw_stop=0;
+parameter sw_start=1;
 
 reg tm_state=tm_stop, tm_nstate=tm_stop;
+reg sw_state=sw_stop, sw_nstate=sw_stop;
+
 reg [1:0] state = clock, nstate = clock;   
 reg trigger=0;
 
@@ -37,7 +43,7 @@ integer count=0;
 reg[31:0] scount=0;
  
 digits digits_1(clk,reset,state,seconds,minutes,hours,ones,tens,hundreds,thousands);
-seven_seg seven_seg_1(clk,reset,state,tm_state,edit_place,ones,tens,hundreds,thousands,seg,digit);
+seven_seg seven_seg_1(clk,reset,state,tm_state,sw_state,edit_place,ones,tens,hundreds,thousands,seg,digit);
 
  //Slower Clock
  always @(posedge clk) begin
@@ -81,11 +87,13 @@ seven_seg seven_seg_1(clk,reset,state,tm_state,edit_place,ones,tens,hundreds,tho
  //Modes_Run
 always @(posedge clk) begin
     if(state==clock)
-        mode_value<=3'b100;
+        mode_value<=4'b1000;
      else if(state==edit)
-        mode_value<=3'b010;
+        mode_value<=4'b0100;
     else if(state==timer)
-        mode_value<=3'b001;
+        mode_value<=4'b0010;
+    else if(state==stop_watch)
+        mode_value<=4'b0001;
 end
  
 //Different Modes
@@ -227,9 +235,11 @@ always @(posedge(clk) ) begin
 				else if(mode) begin
 					if(scount<15_000_000) //25_000_000
 						scount<=scount+1;
+
 					else begin
 						if(mode && scount==15_000_000) begin  //25_000_000
-							nstate<=clock;
+							nstate<=stop_watch;
+							trigger<=1;
 							scount<=scount+1;
 						end
 						else begin
@@ -345,6 +355,112 @@ always @(posedge(clk) ) begin
 				minutes<=minutes;
 			end
 		endcase
+		end
+		stop_watch: begin
+			if(trigger) begin
+				minutes<=0;
+				seconds<=0;
+				trigger<=0;
+			end
+			case(sw_state)
+			sw_stop: begin
+				if(reset == 1'b1) begin 
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(reset && scount==15_000_000) begin //25_000_000
+							seconds<=0;
+							minutes<=0;
+							scount<=scount+1;
+						end
+						else begin
+							seconds<=seconds;
+							minutes<=minutes;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(mode) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+
+					else begin
+						if(mode && scount==15_000_000) begin  //25_000_000
+							nstate<=clock;
+							scount<=scount+1;
+						end
+						else begin
+							nstate<=nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							sw_nstate<=sw_start;
+							scount<=scount+1;
+						end
+						else begin
+							sw_nstate<=sw_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					state<=nstate;
+					sw_state<=sw_nstate;
+					
+				end
+			end
+			sw_start: begin
+				if(start_stop) begin
+					if(scount<15_000_000) //25_000_000
+						scount<=scount+1;
+					else begin
+						if(start_stop && scount==15_000_000) begin //25_000_000
+							sw_nstate<=sw_stop;
+							scount<=scount+1;
+						end
+						else begin
+							sw_nstate<=sw_nstate;
+							scount<=scount+1;
+						end
+					end
+				end
+				else begin
+					scount<=0;
+					sw_state<=sw_nstate;
+					if(sclk==1'b1 && count==0 && sw_nstate==sw_start) begin  
+						if(minutes<59) begin
+							if(seconds<59) 
+								seconds<=seconds+1;
+							else begin
+								minutes<=minutes+1;
+								seconds<=6'd00;
+							end
+						end
+						else begin
+							if(seconds==6'd59) begin
+							    sw_nstate<=sw_stop;
+								seconds<=seconds;
+								minutes<=minutes;
+							end
+							else
+								seconds<=seconds+1;
+						end		
+					end
+				end
+			end
+			default: begin
+				sw_state<=sw_stop;
+				seconds<=seconds;
+				minutes<=minutes;
+			end
+			endcase
 		end
 		default: begin
 			state<=clock;
