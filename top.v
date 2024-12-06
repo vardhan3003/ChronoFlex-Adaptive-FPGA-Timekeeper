@@ -18,7 +18,7 @@ initial minutes=0;
 initial hours=0;
 
 //Confirmation LED's
-initial mode_value=3'b100;
+initial mode_value=4'b1000;
 
 //Modes
 parameter clock = 0;
