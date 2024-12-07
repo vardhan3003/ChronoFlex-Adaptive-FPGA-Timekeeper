@@ -108,7 +108,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==3 && sw_state==0) begin
+			else if(state==3 && sw_state==0) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
