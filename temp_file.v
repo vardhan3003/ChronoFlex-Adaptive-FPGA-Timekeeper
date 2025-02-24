@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 module top(input clk, reset, start_stop, mode, edit_shift, inc, output reg buzzer, output [0:6] seg,output [3:0] digit,output reg [4:0] mode_value);
 
 reg [1:0] edit_place;
@@ -159,7 +158,7 @@ always@(posedge clk) begin
 		end
 	end
 	
-	if(seconds_temp==59 && minutes_temp==59 && hours_temp==23) begin
+	if(seconds_temp==59 && minutes_temp==59 && hours_temp==23 && sclk==1 && count==49_999_999) begin
 		day_temp<=day_temp + 1;
 		if(month_temp==2 && day_temp==28) begin
 			day_temp<=1;
@@ -750,5 +749,3 @@ always @(posedge(clk)) begin
 	endcase
 end
 endmodule
-
-
