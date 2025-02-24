@@ -2,7 +2,7 @@
 module digits(
     input clk,
     input reset,
-	input [1:0] state,
+	input [2:0] state,
     input [5:0] seconds, minutes,
     input [4:0] hours,
     output reg [3:0] ones,
@@ -21,7 +21,7 @@ module digits(
             thousands <= 0;
         end 
         else begin
-			if(state==0 || state==1) begin
+			if(state==0 || state==1 || state==4) begin
 				ones <= minutes % 10;
 				tens <= minutes / 10;
 				hundreds <= hours % 10;
