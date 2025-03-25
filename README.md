@@ -51,16 +51,20 @@ The long press of the start_stop button allows users to view the set alarm time.
 
 3.1 Push Buttons
 mode → Cycles through Clock, Edit, Timer, Stopwatch, and Alarm states.
+
 reset → Resets:
 Time values (hours, minutes, seconds) to 00:00 in Edit Mode.
 Timer and Stopwatch to 00:00.
 Date and Month to 1st January (default).
+
 edit_shift → Switches between:
 Hours and Minutes in Edit Mode and Alarm Mode.
 Minutes and Seconds in Stopwatch and Timer Mode.
 Date and Month in Edit Mode.
+
 inc (Increment) → Increases values of time, date, timer, stopwatch, and alarm settings.
 Long Press: Displays current date and month in Clock Mode.
+
 start_stop → Manages operations in Stopwatch, Timer, and Alarm modes.
 Starts or stops the Stopwatch and Timer.
 Stops the alarm buzzer when ringing.
