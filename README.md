@@ -1,4 +1,5 @@
 1. INTRODUCTION
+   
 This project entails the design and implementation of a digital watch on a Basys board using Verilog. The watch operates in five primary modes: Real-Time Clock (RTC), Edit Mode, Timer Mode, Stopwatch Mode, and Alarm Mode.
 
 The RTC mode displays the current time in a 24-hour format, updating seconds, minutes, and hours in real-time.
@@ -73,20 +74,25 @@ Show the buzzer status when the alarm is activated.
 Clock Mode:
 Displays hours and minutes in real time.
 Long press of Increment (inc) button shows date and month.
+
 Edit Mode:
 Displays hours, minutes, date, and month.
 The blinking display indicates the currently active field being modified.
+
 Timer Mode:
 Displays minutes and seconds.
 Operates based on the start/stop state.
 The stopped state makes the display blink, indicating the active field.
+
 Stopwatch Mode:
 Displays elapsed time in minutes and seconds.
 Stops, starts, or resets based on the start_stop button.
 The stopped state makes the display blink, indicating the active field.
+
 Alarm Mode:
 Displays the set alarm time.
 Long press of start_stop button shows the alarm time if the alarm is on.
+
 5. OUTPUT ON THE BASYS BOARD
 --------------------------------------------------------
 
