@@ -50,6 +50,7 @@ The long press of the start_stop button allows users to view the set alarm time.
 3. CONSTRAINTS OF THE BOARD
 
 3.1 Push Buttons
+
 mode → Cycles through Clock, Edit, Timer, Stopwatch, and Alarm states.
 
 reset → Resets:
