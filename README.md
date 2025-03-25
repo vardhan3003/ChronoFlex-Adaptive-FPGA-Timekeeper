@@ -72,10 +72,12 @@ Stops the alarm buzzer when ringing.
 Long Press: Displays alarm time if the alarm is set.
 
 3.2 LED Indicators
+
 Indicate the current mode of operation.
 Show the buzzer status when the alarm is activated.
 
 3.3 Seven-Segment Display
+
 Clock Mode:
 Displays hours and minutes in real time.
 Long press of Increment (inc) button shows date and month.
