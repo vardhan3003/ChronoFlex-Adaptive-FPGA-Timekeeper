@@ -1,17 +1,17 @@
 module top(input clk, reset, start_stop, mode, edit_shift, inc, output reg buzzer, output [0:6] seg,output [3:0] digit,output reg [4:0] mode_value);
 
-reg [1:0] edit_place;
+reg [1:0] edit_place=0;
 
-reg [5:0] seconds,minutes;
-reg [4:0] hours;
+reg [5:0] seconds=0,minutes=0;
+reg [4:0] hours=0;
 
 //clock handles
 reg [5:0] seconds_temp=0,minutes_temp=0;
 reg [4:0] hours_temp=0;
 
 //Adding alaram Handles
-reg [5:0] al_minutes;
-reg [4:0] al_hours;
+reg [5:0] al_minutes=0;
+reg [4:0] al_hours=0;
 
 //Adding date handles
 reg [4:0] day_temp=1;
@@ -20,18 +20,21 @@ reg [3:0] month_temp=1;
 wire [3:0] ones,tens,hundreds,thousands;
 
 //initial values
+/*
 initial edit_place=0;
 initial seconds=0;
 initial minutes=0;
 initial hours=0;
 
+
 //Initializing Alaram needs
 initial al_minutes=0;
 initial al_hours=0;
 initial buzzer=0;
-
+*/
 //Confirmation LED's
 initial mode_value=5'b10000;
+
 
 //Modes
 parameter clock = 0;
