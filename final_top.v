@@ -187,13 +187,13 @@ always @(posedge(clk)) begin
                 scount<=scount+1;
             else begin
                 if(mode && scount==15_000_000) begin //25_000_000
-					nstate<=edit;
-					trigger<=1;//////////////
-                    scount<=scount+1;
+			nstate<=edit;
+			trigger<=1;//////////////
+                    	scount<=scount+1;
                 end
                 else begin
-					nstate<=nstate;
-                    scount<=scount+1;
+			nstate<=nstate;
+                    	scount<=scount+1;
                 end
             end
         end
