@@ -100,6 +100,7 @@ Alarm Mode:
 Displays the set alarm time.
 Long press of start_stop button shows the alarm time if the alarm is on.
 
-5. OUTPUT ON THE BASYS BOARD
+5. OUTPUT ON THE BASYS BOARD(ONLY WITH CLOCK AND TIMER MODE)
 --------------------------------------------------------
+https://drive.google.com/file/d/1PUQTWywNAGPOG6f4PEp72l2Ui6K2iOzT/view?usp=drivesdk 
 
