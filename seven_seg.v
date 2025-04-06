@@ -74,7 +74,7 @@ module seven_seg(
     always @*
         case(digit_select)
             2'b00 : begin 
-						if(state==0 && alarm_state==1 && start_stop && scount>1) begin //alarm blinking
+						if(state==0 && alarm_state==1 && start_stop && scount>14_999_999) begin //alarm blinking
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -223,7 +223,7 @@ module seven_seg(
                         end
             end               
             2'b01 : begin      
-						if(state==0 && alarm_state==1 && start_stop && scount>1) begin
+						if(state==0 && alarm_state==1 && start_stop && scount>14_999_999) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -373,7 +373,7 @@ module seven_seg(
                     end
                     
             2'b10 : begin   
-						if(state==0 && alarm_state==1 && start_stop && scount>1) begin //alarm blink
+		    if(state==0 && alarm_state==1 && start_stop && scount>14_999_999) begin //alarm blink
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -468,7 +468,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==3 && sw_state==0) begin
+			else if(state==3 && sw_state==0) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -487,7 +487,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==4 && alarm_state==0 && edit_place==1) begin
+			else if(state==4 && alarm_state==0 && edit_place==1) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -523,7 +523,7 @@ module seven_seg(
                     end
                     
             2'b11 : begin     
-						if(state==0 && alarm_state==1 && start_stop && scount>1) begin //alarm blink
+			if(state==0 && alarm_state==1 && start_stop && scount>14_999_999) begin //alarm blink
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -542,7 +542,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==0 && inc && scount>14_999_999) begin //date blinking
+			else if(state==0 && inc && scount>14_999_999) begin //date blinking
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -618,7 +618,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==3 && sw_state==0) begin
+			else if(state==3 && sw_state==0) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
@@ -637,7 +637,7 @@ module seven_seg(
                                 endcase
                             end
                         end
-						else if(state==4 && alarm_state==0 && edit_place==1) begin
+			else if(state==4 && alarm_state==0 && edit_place==1) begin
                             if(sclk==1'b0) begin
                                 seg=7'b111_1111;
                             end
