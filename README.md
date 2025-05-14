@@ -104,3 +104,6 @@ Long press of start_stop button shows the alarm time if the alarm is on.
 --------------------------------------------------------
 https://drive.google.com/file/d/1PUQTWywNAGPOG6f4PEp72l2Ui6K2iOzT/view?usp=drivesdk 
 
+![image](https://github.com/user-attachments/assets/cb7b6d09-4213-4233-baa3-29aa01bbac1b)
+
+
